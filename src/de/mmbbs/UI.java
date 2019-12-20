@@ -8,8 +8,16 @@ public class UI extends JFrame {
     private JTable table1;
     private JPanel panel1;
     private DefaultTableModel model;
+    private DBlogic dbLogic;
 
     UI() {
+        // Establish connection to local database
+        try {
+            this.dbLogic = new DBlogic();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
         // TODO: Implement form to input SQL-statements?
 
         // Initial window on app start
@@ -23,7 +31,7 @@ public class UI extends JFrame {
 
         // Perform DB operation demo
         try {
-            runJDBCdemo();
+            runJDBCdemo("SELECT * FROM books;");
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -39,22 +47,10 @@ public class UI extends JFrame {
         add(this.panel1); // Add rootPanel to Jframe - without, there would only be a blank window
     }
 
-    public void runJDBCdemo() throws SQLException {
-        // Instantiate DB
-        DB db = new DB();
+    public void runJDBCdemo(String query) throws SQLException {
 
-        // Create connection to JDBC
-        Connection conn = db.createDatabaseConnection();
-
-        // Create SQL statement
-        Statement stmt = conn.createStatement();
-
-        // Define a SQL SELECT query: The query result is returned in a 'ResultSet' object.
-        String strSelect = "SELECT * FROM books;";
-        System.out.println("The SQL statement is: " + strSelect + "\n"); // Echo For debugging
-
-        // Execute predefined SQL query
-        ResultSet rset = stmt.executeQuery(strSelect);
+        // Results from SQL query
+        ResultSet rset = this.dbLogic.jdbcQueryDemo(query);
 
         // Process the ResultSet by scrolling the cursor forward via next().
         // For each row, retrieve the contents of the cells with getXxx(columnName).
