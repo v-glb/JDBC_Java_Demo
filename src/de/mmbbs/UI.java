@@ -52,14 +52,11 @@ public class UI extends JFrame {
         // Results from SQL query
         ResultSet rset = this.dbLogic.jdbcQueryDemo(query);
 
-        // Process the ResultSet by scrolling the cursor forward via next().
-        // For each row, retrieve the contents of the cells with getXxx(columnName).
-        System.out.println("The records selected are:");
-
         // Counter for displaying how many results were queried later
         int rowCount = 0;
 
-        // Iterate over queried ResultSet object
+        // Process the ResultSet by scrolling the cursor forward via next().
+        // For each row, retrieve the contents of the cells with getXxx(columnName).
         while (rset.next()) {   // Move the cursor to the next row, return false if no more row
             int id = rset.getInt("id");
             String title = rset.getString("title");
