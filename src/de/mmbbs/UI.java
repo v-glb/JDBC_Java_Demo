@@ -31,7 +31,8 @@ public class UI extends JFrame {
 
         // Perform DB operation demo
         try {
-            runJDBCdemo("SELECT * FROM books;");
+            runJdbcInsertDemo(1007, "Just Plain Java", "Not Another Author", 4.95, 500);
+            runJdbcSelectDemo("SELECT * FROM books;");
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -47,10 +48,10 @@ public class UI extends JFrame {
         add(this.panel1); // Add rootPanel to Jframe - without, there would only be a blank window
     }
 
-    public void runJDBCdemo(String query) throws SQLException {
+    public void runJdbcSelectDemo(String selectQuery) throws SQLException {
 
         // Results from SQL query
-        ResultSet rset = this.dbLogic.jdbcQueryDemo(query);
+        ResultSet rset = this.dbLogic.jdbcSelectQuery(selectQuery);
 
         // Counter for displaying how many results were queried later
         int rowCount = 0;
@@ -72,6 +73,12 @@ public class UI extends JFrame {
 
         // Output just for info purposes
         System.out.println("Total number of records = " + rowCount);
+    }
+
+
+    public void runJdbcInsertDemo(int id, String title, String author, double price, int qty) throws SQLException {
+        // SQL statement that modify the database
+        dbLogic.jdbcInsertQuery(id, title, author, price, qty);
     }
 }
 
