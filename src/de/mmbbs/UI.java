@@ -25,8 +25,6 @@ public class UI extends JFrame {
             e.printStackTrace();
         }
 
-        // TODO: Implement form to input SQL-statements?
-
         // Initial window on app start
         createRootPanel();
 
