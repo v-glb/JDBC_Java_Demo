@@ -13,6 +13,7 @@ public class UI extends JFrame {
     private JButton queryButton;
     private JTextField inputSqlUpdate;
     private JButton updateButton;
+    private JTextField sqlResult;
     private DefaultTableModel model;
     private DBlogic dbLogic;
 
@@ -47,8 +48,10 @@ public class UI extends JFrame {
                     // Clear previous results in table
                     model.setRowCount(0);
 
+                    sqlResult.setText("Query successfull!");
                     runJdbc(sqlQuery);
                 } catch (SQLException ex) {
+                    sqlResult.setText("Error while executing! Please check console for more info.");
                     ex.printStackTrace();
                 }
 
@@ -65,8 +68,10 @@ public class UI extends JFrame {
                     // Clear previous results in table
                     model.setRowCount(0);
 
+                    sqlResult.setText("Statement successfull!");
                     runJdbcStatementDemo(sqlUpdate);
                 } catch (SQLException ex) {
+                    sqlResult.setText("Error while executing! Please check console for more info.");
                     ex.printStackTrace();
                 }
             }
