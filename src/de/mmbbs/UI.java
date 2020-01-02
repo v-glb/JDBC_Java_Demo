@@ -2,11 +2,17 @@ package de.mmbbs;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.sql.*;
 
 public class UI extends JFrame {
     private JTable table1;
     private JPanel panel1;
+    private JTextField inputSqlQuery;
+    private JButton queryButton;
+    private JTextField inputSqlUpdate;
+    private JButton updateButton;
     private DefaultTableModel model;
     private DBlogic dbLogic;
 
@@ -29,13 +35,42 @@ public class UI extends JFrame {
         // Append table header to Jtable
         table1.setModel(model);
 
-        // Perform DB operation demo
-        try {
-            runJdbcInsertDemo(1007, "Just Plain Java", "Not Another Author", 4.95, 500);
-            runJdbcSelectDemo("SELECT * FROM books;");
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+
+        // SQL Statement input handling via Button clicks
+        queryButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                String sqlQuery = inputSqlQuery.getText();
+
+                try {
+                    // Clear previous results in table
+                    model.setRowCount(0);
+
+                    runJdbc(sqlQuery);
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+
+            }
+        });
+
+        updateButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                String sqlUpdate = inputSqlUpdate.getText();
+
+                try {
+                    // Clear previous results in table
+                    model.setRowCount(0);
+
+                    runJdbcStatementDemo(sqlUpdate);
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
     }
 
     private void createRootPanel() {
@@ -48,10 +83,10 @@ public class UI extends JFrame {
         add(this.panel1); // Add rootPanel to Jframe - without, there would only be a blank window
     }
 
-    public void runJdbcSelectDemo(String selectQuery) throws SQLException {
+    public void runJdbc(String selectQuery) throws SQLException {
 
         // Results from SQL query
-        ResultSet rset = this.dbLogic.jdbcSelectQuery(selectQuery);
+        ResultSet rset = this.dbLogic.jdbcQuery(selectQuery);
 
         // Counter for displaying how many results were queried later
         int rowCount = 0;
@@ -76,9 +111,10 @@ public class UI extends JFrame {
     }
 
 
-    public void runJdbcInsertDemo(int id, String title, String author, double price, int qty) throws SQLException {
+    public void runJdbcStatementDemo(String sqlStatement) throws SQLException {
         // SQL statement that modify the database
-        dbLogic.jdbcInsertQuery(id, title, author, price, qty);
+        dbLogic.jdbcStatement(sqlStatement);
     }
+
 }
 

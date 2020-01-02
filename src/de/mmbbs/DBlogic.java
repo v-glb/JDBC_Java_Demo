@@ -8,35 +8,21 @@ public class DBlogic {
     private Statement stmt;
 
     public DBlogic() throws SQLException {
+        // Create DB Object to base query / statements on
         this.db = new DB();
         this.conn = db.createDatabaseConnection();
         this.stmt = conn.createStatement();
     }
 
-    public ResultSet jdbcSelectQuery(String selectQuery) throws SQLException {
-        // Output just for info
-        System.out.println("The SQL statement is: " + selectQuery + "\n"); // Echo For debugging
+    public ResultSet jdbcQuery(String sqlQuery) throws SQLException {
+        System.out.println("The SQL statement is: " + sqlQuery + "\n");
 
-        // Return resultSet from SQL SELECT query
-        return stmt.executeQuery(selectQuery);
+        // Iterate over ResultSet in UI to display rows
+        return stmt.executeQuery(sqlQuery);
     }
 
-    public void jdbcInsertQuery(int id, String title, String author, double price, int qty) throws SQLException {
-        // Use prepared Statement to prevent SQL Injection and escape single quotes
-        PreparedStatement pstmt = conn.prepareStatement("INSERT INTO books VALUES (?, ?, ?, ?, ?)");
-
-        // Fill "?" with properly formated values
-        pstmt.setInt(1, id);
-        pstmt.setString(2, title);
-        pstmt.setString(3, author);
-        pstmt.setDouble(4, price);
-        pstmt.setInt(5, qty);
-
-        // Execute the INSERT INTO statement
-        pstmt.executeUpdate();
-
-
-        // Info
-        System.out.println("Executed INSERT INTO!");
+    public void jdbcStatement(String sqlStatement) throws SQLException {
+        System.out.println("The SQL Statement is: " + sqlStatement  + "\n");
+        stmt.executeUpdate(sqlStatement);
     }
 }

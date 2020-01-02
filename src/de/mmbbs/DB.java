@@ -6,10 +6,6 @@ import java.sql.SQLException;
 
 public class DB {
 
-    public DB() {
-
-    }
-
     public Connection createDatabaseConnection() {
         // Allocate a database 'Connection' object
         // Hint: Add db-driver-.jar as Library in IntelliJ!
