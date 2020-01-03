@@ -4,6 +4,10 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.sql.*;
 
 public class UI extends JFrame {
@@ -47,7 +51,7 @@ public class UI extends JFrame {
                     model.setRowCount(0);
 
                     sqlResult.setText("Query successfull!");
-                    runJdbc(sqlQuery);
+                    runJdbcQueryDemo(sqlQuery);
                 } catch (SQLException ex) {
                     sqlResult.setText("Error while executing! Please check console for more info.");
                     ex.printStackTrace();
@@ -64,21 +68,55 @@ public class UI extends JFrame {
 
                 try {
                     // Clear previous results in table
-                    model.setRowCount(0);
-
+                    // model.setRowCount(0);
                     sqlResult.setText("Statement successfull!");
                     runJdbcStatementDemo(sqlUpdate);
+                    table1.repaint();
                 } catch (SQLException ex) {
                     sqlResult.setText("Error while executing! Please check console for more info.");
                     ex.printStackTrace();
                 }
             }
         });
+
+        // Handle live editing of Jtable cells
+        Action action = new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                TableCellListener tcl = (TableCellListener) e.getSource();
+
+                // Update DB based on user input
+                String id = table1.getValueAt(tcl.getRow(), 0).toString();
+                String currentValue = tcl.getOldValue().toString();
+                String newValue = tcl.getNewValue().toString();
+                String columnName = table1.getColumnName(tcl.getColumn());
+
+                // Only update DB if values are different and changed value is not ID since its PK
+                if (!currentValue.equals(newValue) && !columnName.equals("ID")) {
+                    try {
+                        runJdbcStatementDemo("UPDATE books set " + columnName + " = '" + newValue + "' where id = '" + id + "';");
+                    } catch (SQLException ex) {
+                        ex.printStackTrace();
+                    }
+                } else {
+                    System.out.println("Changing of Primary Key not permitted!");
+                }
+            }
+        };
+
+        // Attach listener to table with DB entries
+        TableCellListener tcl = new TableCellListener(table1, action);
+
+        table1.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                super.mouseReleased(e);
+            }
+        });
     }
 
     private void createRootPanel() {
         setTitle("JDBC Demo");
-        setSize(600, 480);
+        setSize(800, 600);
         setLocationRelativeTo(null); // Center window on screen
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE); // Without, App continues running after closing window
         setVisible(true);
@@ -86,10 +124,10 @@ public class UI extends JFrame {
         add(this.panel1); // Add rootPanel to Jframe - without, there would only be a blank window
     }
 
-    public void runJdbc(String selectQuery) throws SQLException {
+    public void runJdbcQueryDemo(String sqlQuery) throws SQLException {
 
         // Results from SQL query
-        ResultSet rset = this.dbLogic.jdbcQuery(selectQuery);
+        ResultSet rset = this.dbLogic.jdbcQuery(sqlQuery);
 
         // Counter for displaying how many results were queried later
         int rowCount = 0;
