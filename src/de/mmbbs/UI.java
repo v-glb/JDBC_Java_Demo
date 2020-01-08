@@ -6,20 +6,24 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.sql.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class UI extends JFrame {
-    private JTable table1;
+    private JTable dbTable;
     private JPanel panel1;
     private JTextField inputSqlQuery;
     private JButton queryButton;
     private JTextField inputSqlUpdate;
     private JButton updateButton;
     private JTextField sqlResult;
-    private DefaultTableModel model;
+    private JButton addNewButton;
+    private JButton showAllButton;
+    private DefaultTableModel dbTableModel;
     private DBlogic dbLogic;
+    private JPopupMenu popupMenu;
+    private JMenuItem menuItemRemove;
+    private JMenuItem menuItemRemoveAll;
 
     UI() {
         // Establish connection to local database
@@ -33,11 +37,10 @@ public class UI extends JFrame {
         createRootPanel();
 
         // Create table header
-        this.model = new DefaultTableModel(new String[]{"ID", "Title", "Author", "Price", "QTY"}, 0);
+        this.dbTableModel = new DefaultTableModel(new String[]{"ID", "Title", "Author", "Price", "QTY"}, 0);
 
         // Append table header to Jtable
-        table1.setModel(model);
-
+        dbTable.setModel(dbTableModel);
 
         // SQL Statement input handling via Button clicks
         queryButton.addActionListener(new ActionListener() {
@@ -48,33 +51,62 @@ public class UI extends JFrame {
 
                 try {
                     // Clear previous results in table
-                    model.setRowCount(0);
+                    dbTableModel.setRowCount(0);
 
-                    sqlResult.setText("Query successfull!");
                     runJdbcQueryDemo(sqlQuery);
+                    displaySqlExecInfo("Query successful!");
+
                 } catch (SQLException ex) {
-                    sqlResult.setText("Error while executing! Please check console for more info.");
+                    displaySqlExecInfo("Error while executing! Please check console for more info.");
                     ex.printStackTrace();
                 }
 
             }
         });
 
-        updateButton.addActionListener(new ActionListener() {
+        // Select whole row and show context menu on right click
+        // Handle menu actions
+        dbTable.addMouseListener(new MouseAdapter() {
+
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void mouseReleased(MouseEvent e) {
+                int r = dbTable.rowAtPoint(e.getPoint());
 
-                String sqlUpdate = inputSqlUpdate.getText();
+                if (r >= 0 && r < dbTable.getRowCount()) {
+                    dbTable.setRowSelectionInterval(r, r);
+                } else {
+                    dbTable.clearSelection();
+                }
 
-                try {
-                    // Clear previous results in table
-                    // model.setRowCount(0);
-                    sqlResult.setText("Statement successfull!");
-                    runJdbcStatementDemo(sqlUpdate);
-                    table1.repaint();
-                } catch (SQLException ex) {
-                    sqlResult.setText("Error while executing! Please check console for more info.");
-                    ex.printStackTrace();
+                int rowindex = dbTable.getSelectedRow();
+
+                // Do nothing if user is not clicking on an element in table
+                if (rowindex < 0) {
+                    return;
+                }
+
+                // Only show menu if user clicks on a row
+                if (e.isPopupTrigger() && e.getComponent() instanceof JTable) {
+                    JPopupMenu popup = createContextMenu();
+                    popup.show(e.getComponent(), e.getX(), e.getY());
+
+                    // Context menu listeners
+
+                    // Remove selected row
+                    menuItemRemove.addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            removeSelectedRow();
+                        }
+                    });
+
+                    // Remove all rows
+                    menuItemRemoveAll.addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            removeAllRows();
+                        }
+                    });
                 }
             }
         });
@@ -85,10 +117,10 @@ public class UI extends JFrame {
                 TableCellListener tcl = (TableCellListener) e.getSource();
 
                 // Update DB based on user input
-                String id = table1.getValueAt(tcl.getRow(), 0).toString();
+                String id = dbTable.getValueAt(tcl.getRow(), 0).toString();
                 String currentValue = tcl.getOldValue().toString();
                 String newValue = tcl.getNewValue().toString();
-                String columnName = table1.getColumnName(tcl.getColumn());
+                String columnName = dbTable.getColumnName(tcl.getColumn());
 
                 // Only update DB if values are different and changed value is not ID since its PK
                 if (!currentValue.equals(newValue) && !columnName.equals("ID")) {
@@ -104,12 +136,34 @@ public class UI extends JFrame {
         };
 
         // Attach listener to table with DB entries
-        TableCellListener tcl = new TableCellListener(table1, action);
+        TableCellListener tcl = new TableCellListener(dbTable, action);
 
-        table1.addMouseListener(new MouseAdapter() {
+        dbTable.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseReleased(MouseEvent e) {
                 super.mouseReleased(e);
+            }
+        });
+
+        addNewButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                addNewRow();
+            }
+        });
+
+        showAllButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    // Clear previous results in table
+                    dbTableModel.setRowCount(0);
+
+                    runJdbcQueryDemo("SELECT * FROM books;");
+                    displaySqlExecInfo("Query Successfull!");
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
             }
         });
     }
@@ -142,7 +196,7 @@ public class UI extends JFrame {
             int qty = rset.getInt("qty");
 
             // Write results to Jtable
-            model.addRow(new Object[]{id, title, author, price, qty});
+            dbTableModel.addRow(new Object[]{id, title, author, price, qty});
 
             rowCount++;
         }
@@ -151,11 +205,87 @@ public class UI extends JFrame {
         System.out.println("Total number of records = " + rowCount);
     }
 
-
     public void runJdbcStatementDemo(String sqlStatement) throws SQLException {
         // SQL statement that modify the database
         dbLogic.jdbcStatement(sqlStatement);
     }
 
+    public JPopupMenu createContextMenu() {
+        popupMenu = new JPopupMenu();
+        menuItemRemove = new JMenuItem("Remove Selected Row");
+        menuItemRemoveAll = new JMenuItem("Remove All Rows");
+
+        popupMenu.add(menuItemRemove);
+        popupMenu.add(menuItemRemoveAll);
+
+        return popupMenu;
+    }
+
+    public void removeSelectedRow() {
+        int selectedRow = dbTable.getSelectedRow();
+        int rowID = (int) dbTable.getValueAt(selectedRow, 0);
+
+        // Remove row from DB
+        try {
+            runJdbcStatementDemo("DELETE FROM books WHERE id = " + "'" + rowID + "';");
+            displaySqlExecInfo("Delete from DB successful!");
+            // Remove row from table
+            dbTableModel.removeRow(selectedRow);
+        } catch (SQLException e) {
+            displaySqlExecInfo("Error while deleting, please check console for more info");
+            e.printStackTrace();
+        }
+
+
+    }
+
+    private void removeAllRows() {
+        int rowCount = dbTableModel.getRowCount();
+        int currentId;
+
+        for (int i = 0; i < rowCount; i++) {
+            currentId = (int) dbTable.getValueAt(i, 0);
+
+            // try {
+            //      // runJdbcStatementDemo("DELETE FROM books WHERE id = " + "'" + currentId + "';");
+            //      dbTableModel.removeRow(0);
+            // } catch (SQLException e) {
+            //     e.printStackTrace();
+            //     displaySqlExecInfo("Error deleting all rows! Please check console output for more info");
+            //     return;
+            // }
+        }
+
+        displaySqlExecInfo("Successfully removed all rows!");
+    }
+
+    public void addNewRow() {
+        // Get user input for new row
+        int id = Integer.parseInt(JOptionPane.showInputDialog(panel1, "Enter book ID:", null));
+        String title = JOptionPane.showInputDialog(panel1, "Enter book title:", null);
+        String author = JOptionPane.showInputDialog(panel1, "Enter book author:", null);
+        double price = Double.parseDouble(JOptionPane.showInputDialog(panel1, "Enter book price:", null));
+        int qty = Integer.parseInt(JOptionPane.showInputDialog(panel1, "Enter book quantity:", null));
+
+        // Insert new book into DB
+        try {
+            runJdbcStatementDemo("INSERT INTO books values (" + id + ", '" + title + "', '" + author + "', " +
+                    price + ", " + qty + ");");
+            displaySqlExecInfo("Insert value to DB successful!");
+
+            // Append new row to table
+            Object[] row = {id, title, author, price, qty};
+            dbTableModel.addRow(row);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            displaySqlExecInfo("Error while inserting, please check console for more info");
+        }
+    }
+
+    public void displaySqlExecInfo(String message) {
+        // Informs user if query or statement was successful or not
+        sqlResult.setText(message);
+    }
 }
 

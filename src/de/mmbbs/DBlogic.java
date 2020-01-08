@@ -15,7 +15,7 @@ public class DBlogic {
     }
 
     public ResultSet jdbcQuery(String sqlQuery) throws SQLException {
-        System.out.println("The SQL statement is: " + sqlQuery + "\n");
+        System.out.println("The SQL Query is: " + sqlQuery + "\n");
 
         // Iterate over ResultSet in UI to display rows
         return stmt.executeQuery(sqlQuery);
