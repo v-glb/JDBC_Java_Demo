@@ -23,7 +23,6 @@ public class UI extends JFrame {
     private DBlogic dbLogic;
     private JPopupMenu popupMenu;
     private JMenuItem menuItemRemove;
-    private JMenuItem menuItemRemoveAll;
 
     UI() {
         // Establish connection to local database
@@ -86,7 +85,7 @@ public class UI extends JFrame {
                 }
 
                 // Only show menu if user clicks on a row
-                if (e.isPopupTrigger() && e.getComponent() instanceof JTable) {
+                if (e.isShiftDown() && e.getComponent() instanceof JTable || e.isPopupTrigger() && e.getComponent() instanceof JTable) {
                     JPopupMenu popup = createContextMenu();
                     popup.show(e.getComponent(), e.getX(), e.getY());
 
@@ -97,14 +96,6 @@ public class UI extends JFrame {
                         @Override
                         public void actionPerformed(ActionEvent e) {
                             removeSelectedRow();
-                        }
-                    });
-
-                    // Remove all rows
-                    menuItemRemoveAll.addActionListener(new ActionListener() {
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            removeAllRows();
                         }
                     });
                 }
@@ -213,10 +204,8 @@ public class UI extends JFrame {
     public JPopupMenu createContextMenu() {
         popupMenu = new JPopupMenu();
         menuItemRemove = new JMenuItem("Remove Selected Row");
-        menuItemRemoveAll = new JMenuItem("Remove All Rows");
 
         popupMenu.add(menuItemRemove);
-        popupMenu.add(menuItemRemoveAll);
 
         return popupMenu;
     }
@@ -235,28 +224,6 @@ public class UI extends JFrame {
             displaySqlExecInfo("Error while deleting, please check console for more info");
             e.printStackTrace();
         }
-
-
-    }
-
-    private void removeAllRows() {
-        int rowCount = dbTableModel.getRowCount();
-        int currentId;
-
-        for (int i = 0; i < rowCount; i++) {
-            currentId = (int) dbTable.getValueAt(i, 0);
-
-            // try {
-            //      // runJdbcStatementDemo("DELETE FROM books WHERE id = " + "'" + currentId + "';");
-            //      dbTableModel.removeRow(0);
-            // } catch (SQLException e) {
-            //     e.printStackTrace();
-            //     displaySqlExecInfo("Error deleting all rows! Please check console output for more info");
-            //     return;
-            // }
-        }
-
-        displaySqlExecInfo("Successfully removed all rows!");
     }
 
     public void addNewRow() {
